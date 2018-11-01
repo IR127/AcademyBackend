@@ -12,7 +12,7 @@ namespace AcademyBackend.Concrete_Types
 
     public class ChangeFeed
     {
-        private static readonly int numberToInsert = 10;
+        private static readonly int numberToInsert = 1;
 
         private static DocumentClient client;
 

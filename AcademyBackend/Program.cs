@@ -1,8 +1,10 @@
 ﻿namespace AcademyBackend
 {
     using System;
+    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using AcademyBackend.Concrete_Types;
 
     class Program
     {
@@ -13,7 +15,7 @@
         {
             var messagesToSend = ChangeFeed.RunChangeFeedAsync(DatabaseName, CollectionName).GetAwaiter().GetResult();
 
-            using (AzureServiceBus azureServiceBus = new AzureServiceBus())
+            using (AzureServiceBus azureServiceBus = new AzureServiceBus(new AdminEmailAlert(new TextFileDataStore())))
             {
                 azureServiceBus.SendMessagesAsync(messagesToSend).GetAwaiter().GetResult();
                 azureServiceBus.RecieveEmail();

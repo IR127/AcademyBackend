@@ -24,6 +24,8 @@ namespace AcademyBackend.Concrete_Types
         {
             if (!this.IsCompleted(message.Id))
             {
+                Console.WriteLine($"Received message with TaskId: {message.Id}.");
+
                 var client = new SendGridClient(SendGridApiKey);
                 var msg = new SendGridMessage()
                 {
@@ -33,6 +35,8 @@ namespace AcademyBackend.Concrete_Types
                 };
                 msg.AddTo(new EmailAddress("idrees.rabani@asos.com", "Test User"));
                 await client.SendEmailAsync(msg);
+
+                this.dataStore.Write(message.Id);
             }
         }
 

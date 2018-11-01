@@ -78,8 +78,6 @@
 
             await this.messageAction.Excute(updateMessage);
 
-            Console.WriteLine($"Received message with TaskId: {updateMessage.Id}.");
-
             await subscriptionClient.CompleteAsync(message.SystemProperties.LockToken);
         }
 
