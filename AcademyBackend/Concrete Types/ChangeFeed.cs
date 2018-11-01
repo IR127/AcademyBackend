@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AcademyBackend.Concrete_Types
+﻿namespace AcademyBackend.Concrete_Types
 {
+    using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.Client;
@@ -12,38 +10,45 @@ namespace AcademyBackend.Concrete_Types
 
     public class ChangeFeed
     {
-        private static readonly int numberToInsert = 1;
+        private readonly int testInsert;
 
-        private static DocumentClient client;
+        private DocumentClient client;
 
-        private static readonly string endpointUrl = "https://todo-list.documents.azure.com:443";
-        private static readonly string authorizationKey = "EAuHmYP4pDOvXoDDS9oU1HlZ7wGI0beCQXaKYxOaz6LNsAh60w6cnYcfY33xDxRJM23puYFDvZrDOR18ou59FQ==";
+        private readonly string endpointUrl;
+        private readonly string authorizationKey;
 
-        public static async Task<List<ServiceBusMessage>> RunChangeFeedAsync(string databaseId, string collectionId)
+        public ChangeFeed(string endpointUrl, string authorizationKey, int testInsert = 0)
         {
-            client = new DocumentClient(new Uri(endpointUrl), authorizationKey,
+            this.testInsert = testInsert;
+            this.endpointUrl = endpointUrl;
+            this.authorizationKey = authorizationKey;
+        }
+
+        public async Task<List<ServiceBusMessage>> RunChangeFeedAsync(string databaseId, string collectionId)
+        {
+            this.client = new DocumentClient(new Uri(this.endpointUrl), this.authorizationKey,
                 new ConnectionPolicy {ConnectionMode = ConnectionMode.Direct, ConnectionProtocol = Protocol.Tcp});
 
-            await client.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseId });
+            await this.client.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseId });
 
             DocumentCollection collectionDefinition = new DocumentCollection();
             collectionDefinition.Id = collectionId;
             collectionDefinition.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
             collectionDefinition.PartitionKey.Paths.Add("/UserId");
 
-            await client.CreateDocumentCollectionIfNotExistsAsync(
+            await this.client.CreateDocumentCollectionIfNotExistsAsync(
                 UriFactory.CreateDatabaseUri(databaseId),
                 collectionDefinition,
                 new RequestOptions { OfferThroughput = 400 });
 
             Uri collectionUri = UriFactory.CreateDocumentCollectionUri(databaseId, collectionId);
 
-            if (numberToInsert != 0)
+            if (this.testInsert != 0)
             {
-                Console.WriteLine($"Inserting {numberToInsert} document(s)");
+                Console.WriteLine($"Inserting {testInsert} document(s)");
                 List<Task> insertTasks = new List<Task>();
 
-                for (int i = 0; i < numberToInsert; i++)
+                for (int i = 0; i < testInsert; i++)
                 {
                     insertTasks.Add(client.CreateDocumentAsync(
                         collectionUri,
@@ -62,12 +67,12 @@ namespace AcademyBackend.Concrete_Types
             }
 
             // Returns all documents in the collection.
-            List<ServiceBusMessage> changes = await GetChanges(client, collectionUri);
+            List<ServiceBusMessage> changes = await this.GetChanges(this.client, collectionUri);
 
             return changes;
         }
 
-        private static async Task<List<ServiceBusMessage>> GetChanges(DocumentClient client, Uri collectionUri)
+        private async Task<List<ServiceBusMessage>> GetChanges(DocumentClient client, Uri collectionUri)
         {
             Console.WriteLine("\n======================================================");
             Console.WriteLine("                 Accessing Change Feed                ");

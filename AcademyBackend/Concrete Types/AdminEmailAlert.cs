@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AcademyBackend.Concrete_Types
+﻿namespace AcademyBackend.Concrete_Types
 {
+    using System;
     using System.Threading.Tasks;
     using AcademyBackend.Interfaces;
     using AcademyBackend.Models;
     using SendGrid;
     using SendGrid.Helpers.Mail;
+    using System.Configuration;
 
     class AdminEmailAlert : IMessageAction
     {
-        private const string SendGridApiKey = "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";
+        private readonly string apiKey;
         private readonly IDataStore dataStore;
 
-        public AdminEmailAlert(IDataStore dataStore)
+        public AdminEmailAlert(IDataStore dataStore, string apiKey)
         {
             this.dataStore = dataStore;
+            this.apiKey = apiKey;
         }
 
         public async Task Excute(ServiceBusMessage message)
@@ -26,7 +25,7 @@ namespace AcademyBackend.Concrete_Types
             {
                 Console.WriteLine($"Received message with TaskId: {message.Id}.");
 
-                var client = new SendGridClient(SendGridApiKey);
+                var client = new SendGridClient(this.apiKey);
                 var msg = new SendGridMessage()
                 {
                     From = new EmailAddress("Admin@BestToDoList.com", "BDTL Team"),

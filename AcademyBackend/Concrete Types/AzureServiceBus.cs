@@ -1,29 +1,31 @@
 ﻿namespace AcademyBackend.Concrete_Types
 {
+    using AcademyBackend.Interfaces;
+    using AcademyBackend.Models;
     using Microsoft.Azure.ServiceBus;
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using AcademyBackend.Interfaces;
-    using AcademyBackend.Models;
-    using Newtonsoft.Json;
-    using SendGrid;
-    using SendGrid.Helpers.Mail;
+    using System.Configuration;
 
     public class AzureServiceBus : IDisposable
     {
         private readonly IMessageAction messageAction;
-        const string ServiceBusConnectionString = "Endpoint=sb://besttodolist.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=rkmA9KEJvxzS8f7Stw/eDDmvX2e0QNBbQllTniH7Emw=";
-        const string TopicName = "todo-events";
-        const string SubscriptionName = "SendGrid";
+        private readonly string connectionString;
+        private readonly string topicName;
+        private readonly string subscriptionName;
         static ITopicClient topicClient;
         static ISubscriptionClient subscriptionClient;
 
-        public AzureServiceBus(IMessageAction messageAction)
+        public AzureServiceBus(IMessageAction messageAction, string connectionString, string topicName, string subscriptionName)
         {
             this.messageAction = messageAction;
+            this.connectionString = connectionString;
+            this.topicName = topicName;
+            this.subscriptionName = subscriptionName;
         }
 
         public async Task SendMessagesAsync(IList<ServiceBusMessage> messagesToSend)
@@ -34,14 +36,14 @@
 
             var numberOfMessagesToSend = messagesToSend.Count;
 
-            topicClient = new TopicClient(ServiceBusConnectionString, TopicName);
+            topicClient = new TopicClient(this.connectionString, this.topicName);
 
             for (var i = 0; i < numberOfMessagesToSend; i++)
             {
                 string messageBody = JsonConvert.SerializeObject(messagesToSend[i]);
                 var message = new Message(Encoding.UTF8.GetBytes(messageBody));
 
-                Console.WriteLine($"Sent message {messagesToSend[i].Id} to Azure Service Bus (Topic: {TopicName} | Subscription: {SubscriptionName})");
+                Console.WriteLine($"Sent message {messagesToSend[i].Id} to Azure Service Bus (Topic: {this.topicName} | Subscription: {this.subscriptionName})");
 
                 await topicClient.SendAsync(message);
             }
@@ -55,7 +57,7 @@
             Console.WriteLine("      Processing Messages From Azure Service Bus      ");
             Console.WriteLine("======================================================");
 
-            subscriptionClient = new SubscriptionClient(ServiceBusConnectionString, TopicName, SubscriptionName);
+            subscriptionClient = new SubscriptionClient(this.connectionString, this.topicName, this.subscriptionName);
 
             this.ReceiveMessages();
         }

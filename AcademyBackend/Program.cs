@@ -1,21 +1,28 @@
 ﻿namespace AcademyBackend
 {
     using System;
+    using System.Configuration;
     using System.IO;
-    using System.Threading;
-    using System.Threading.Tasks;
     using AcademyBackend.Concrete_Types;
+    using Microsoft.Extensions.Configuration;
 
     class Program
     {
-        private static readonly string DatabaseName = "Task";
-        private static readonly string CollectionName = "Items";
-
         public static void Main(string[] args)
         {
-            var messagesToSend = ChangeFeed.RunChangeFeedAsync(DatabaseName, CollectionName).GetAwaiter().GetResult();
+            IConfiguration config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", true, true)
+                .Build();
 
-            using (AzureServiceBus azureServiceBus = new AzureServiceBus(new AdminEmailAlert(new TextFileDataStore())))
+            var changeFeed = new ChangeFeed(config["Cosmos:EndpointUrl"], config["Cosmos:AuthorizationKey"], 1);
+
+            var messagesToSend = changeFeed.RunChangeFeedAsync(config["Cosmos:DatabaseName"], config["Cosmos:CollectionName"]).GetAwaiter().GetResult();
+
+            using (AzureServiceBus azureServiceBus = new AzureServiceBus(
+                new AdminEmailAlert(new TextFileDataStore(), config["SendGrid:ApiKey"]),
+                config["AzureServiceBus:ConnectionString"],
+                config["AzureServiceBus:TopicName"],
+                config["AzureServiceBus:SubscriptionName"]))
             {
                 azureServiceBus.SendMessagesAsync(messagesToSend).GetAwaiter().GetResult();
                 azureServiceBus.RecieveEmail();

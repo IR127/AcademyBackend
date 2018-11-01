@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AcademyBackend.Concrete_Types
+﻿namespace AcademyBackend.Concrete_Types
 {
+    using System;
+    using AcademyBackend.Interfaces;
     using System.IO;
     using System.Linq;
-    using System.Reflection;
-    using AcademyBackend.Interfaces;
     class TextFileDataStore : IDataStore
     {
         readonly string path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, @"Data\MessagesCompleted.txt");
