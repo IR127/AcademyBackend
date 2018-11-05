@@ -4,19 +4,17 @@
     using System.Threading.Tasks;
     using AcademyBackend.Interfaces;
     using AcademyBackend.Models;
-    using SendGrid;
-    using SendGrid.Helpers.Mail;
     using System.Configuration;
 
-    class AdminEmailAlert : IMessageAction
+    public class AdminEmailAlert : IMessageAction
     {
-        private readonly string apiKey;
+        private readonly IEmailDeliveryService emailDeliveryService;
         private readonly IDataStore dataStore;
 
-        public AdminEmailAlert(IDataStore dataStore, string apiKey)
+        public AdminEmailAlert(IDataStore dataStore, IEmailDeliveryService emailDeliveryService)
         {
             this.dataStore = dataStore;
-            this.apiKey = apiKey;
+            this.emailDeliveryService = emailDeliveryService;
         }
 
         public async Task Excute(ServiceBusMessage message)
@@ -25,15 +23,7 @@
             {
                 Console.WriteLine($"Received message with TaskId: {message.Id}.");
 
-                var client = new SendGridClient(this.apiKey);
-                var msg = new SendGridMessage()
-                {
-                    From = new EmailAddress("Admin@BestToDoList.com", "BDTL Team"),
-                    Subject = "New Task Added",
-                    PlainTextContent = $"Task added with Id: {message.Id}"
-                };
-                msg.AddTo(new EmailAddress("idrees.rabani@asos.com", "Test User"));
-                await client.SendEmailAsync(msg);
+                await this.emailDeliveryService.Send(message);
 
                 this.dataStore.Write(message.Id);
             }
