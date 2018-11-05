@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AcademyBackend
+namespace AcademyBackend.Models
 {
         using System;
         using System.ComponentModel.DataAnnotations;
@@ -20,10 +20,10 @@ namespace AcademyBackend
             [MinLength(5)]
             public string Description { get; set; }
 
-            public DateTime DueBy { get; set; }
+            public DateTimeOffset DueBy { get; set; }
 
             public bool IsComplete { get; set; }
 
-            public DateTime Added { get; set; }
+            public DateTimeOffset Added { get; set; }
     }
 }
